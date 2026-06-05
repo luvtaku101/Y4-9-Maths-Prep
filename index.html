@@ -98,17 +98,18 @@ body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(-
 
 .section-header { padding: 10px 28px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); }
 .questions-list { padding: 6px 0; }
-.question-row { display: grid; grid-template-columns: 40px 1fr auto; align-items: flex-start; gap: 12px; padding: 14px 28px; border-bottom: 1px dashed var(--border); }
+.question-row { display: grid; grid-template-columns: 40px 1fr; align-items: flex-start; gap: 12px; padding: 14px 28px; border-bottom: 1px dashed var(--border); }
 .question-row:last-child { border-bottom: none; }
 .q-num { border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.84rem; flex-shrink: 0; margin-top: 2px; color: #fff; }
 .q-body { flex: 1; }
 .q-text { font-size: 0.98rem; font-weight: 600; line-height: 1.55; margin-bottom: 6px; }
 .q-context { font-size: 0.86rem; color: #777; margin-bottom: 6px; font-style: italic; }
-.working-space { border: 1.5px dashed var(--sage-light); border-radius: 8px; background: #f9fdf9; height: 144px; margin-top: 8px; position: relative; }
+.answer-line-row { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin: 10px 0 6px; }
+.answer-line-label { font-size: 0.78rem; font-weight: 700; color: #aaa; white-space: nowrap; }
+.answer-line { border-bottom: 2px solid var(--navy); flex: 0 0 160px; height: 22px; }
+.working-space { border: 1.5px dashed var(--sage-light); border-radius: 8px; background: #f9fdf9; height: 144px; margin-top: 4px; position: relative; }
 .working-space::after { content: 'working out space'; position: absolute; top: 8px; left: 10px; font-size: 0.7rem; color: var(--sage-light); font-style: italic; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 .working-space.tall { height: 200px; }
-.answer-box { border: 2px solid var(--border); border-radius: 8px; padding: 8px 12px; text-align: right; min-width: 120px; font-size: 0.8rem; color: #bbb; font-weight: 700; }
-.answer-box span { display: block; border-top: 2px solid var(--navy); margin-top: 26px; padding-top: 4px; font-size: 0.73rem; color: var(--navy); opacity: 0.6; text-align: center; }
 .marks-row { display: flex; justify-content: flex-end; padding: 14px 28px; border-top: 2px solid var(--border); background: var(--cream); font-weight: 800; font-size: 0.85rem; color: var(--sage-dark); gap: 20px; flex-wrap: wrap; }
 
 /* ANSWER KEY */
@@ -129,7 +130,6 @@ body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(-
   .app-header{padding:16px 14px 12px;}
   .controls{padding:12px 14px;}
   .question-row{grid-template-columns:34px 1fr;padding:12px 14px;}
-  .answer-box{display:none;}
   .name-row{padding:12px 14px;}
   .paper-header,.section-header,.marks-row{padding-left:14px;padding-right:14px;}
 }
@@ -401,11 +401,11 @@ function renderPaper(paper) {
         <div class="q-body">
           ${q.context?`<div class="q-context">${q.context}</div>`:''}
           <div class="q-text">${q.q}</div>
+          <div class="answer-line-row">
+            <span class="answer-line-label">Answer${q.unit?' ('+q.unit+')':''}:</span>
+            <div class="answer-line"></div>
+          </div>
           <div class="working-space${tall?' tall':''}"></div>
-        </div>
-        <div class="answer-box">
-          <div style="height:26px"></div>
-          <span>Answer${q.unit?' ('+q.unit+')':''}</span>
         </div>
       </div>`;
       qNum++;
