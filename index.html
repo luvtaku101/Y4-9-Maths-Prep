@@ -342,24 +342,21 @@ async function generatePaper() {
   const weekDate = document.getElementById('weekDate').value;
   const weekLabel = weekDate ? new Date(weekDate).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : '';
 
-  const GEMINI_API_KEY = 'AIzaSyDGwhKfWdlGeSoeZpOzWo-bpWBvrjKQGTk';
+  const WORKER_URL = 'https://kitchen-magic-ai.mktg201.workers.dev';
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          contents:[{
-            parts:[{
-              text: cfg.systemPrompt + '\n\nGenerate a new practice paper now. Use varied numbers and real-world contexts. Make it engaging. Return ONLY valid JSON.'
-            }]
-          }],
-          generationConfig:{ temperature:0.8, maxOutputTokens:8192 }
-        })
-      }
-    );
+    const res = await fetch(WORKER_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents:[{
+          parts:[{
+            text: cfg.systemPrompt + '\n\nGenerate a new practice paper now. Use varied numbers and real-world contexts. Make it engaging. Return ONLY valid JSON.'
+          }]
+        }],
+        generationConfig:{ temperature:0.8, maxOutputTokens:8192 }
+      })
+    });
     const data = await res.json();
     const raw = data.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim();
     const paper = JSON.parse(raw);
