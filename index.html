@@ -463,36 +463,46 @@ async function savePdf(answerKeyOnly=false) {
         doc.text(sec.title.toUpperCase(),margin,y);y+=14;
 
         qs.forEach(q=>{
-          checkPage(22);
-          // Q number badge
-          doc.setFillColor(240,120,80);
-          doc.roundedRect(margin,y-5,18,9,2,2,'F');
-          doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-          doc.text('Q'+qNum,margin+9,y-0.2,{align:'center'});
-
-          // Answer
-          doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);
+          // Estimate total height needed for this item
           const ansText = q.answer+(q.unit?' '+q.unit:'');
-          const ansLines = doc.splitTextToSize(ansText, cw-28);
-          doc.text(ansLines,margin+22,y-0.2);
+          const ansLines = doc.splitTextToSize(ansText, cw-30);
+          const noteLines = q.answerNote ? doc.splitTextToSize(q.answerNote, cw-30) : [];
+          const qShort = doc.splitTextToSize(q.q.substring(0,140), cw-30);
+          const totalH = 6 + ansLines.length*6 + (noteLines.length>0 ? noteLines.length*5+2 : 0) + qShort.length*4.5 + 8;
+          checkPage(totalH);
 
-          // Note
-          if(q.answerNote){
-            doc.setFontSize(8);doc.setFont('helvetica','italic');doc.setTextColor(140,140,140);
-            const noteLines = doc.splitTextToSize(q.answerNote, cw-28);
-            doc.text(noteLines, margin+22, y+5);
-            y+=noteLines.length*4;
+          // ── Q number badge (left column, fixed width 20mm) ──
+          doc.setFillColor(240,120,80);
+          doc.roundedRect(margin, y-1, 20, 8, 2, 2, 'F');
+          doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+          doc.text('Q'+qNum, margin+10, y+4.5, {align:'center'});
+
+          // ── Right column starts at margin+24 ──
+          const rx = margin+24;
+          let ry = y+5; // baseline for first text line
+
+          // Answer (bold, dark)
+          doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(30,30,30);
+          doc.text(ansLines, rx, ry);
+          ry += ansLines.length * 6 + 2;
+
+          // Method note (italic, orange)
+          if(noteLines.length > 0){
+            doc.setFontSize(8); doc.setFont('helvetica','italic'); doc.setTextColor(200,100,50);
+            doc.text(noteLines, rx, ry);
+            ry += noteLines.length * 5 + 2;
           }
 
-          // Question text (smaller, grey)
-          doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(160,160,160);
-          const qShort = doc.splitTextToSize(q.q.substring(0,120), cw-28);
-          doc.text(qShort, margin+22, y+5);
-          y += Math.max(ansLines.length*5, 6) + qShort.length*3.8 + 6;
+          // Question preview (small, light grey)
+          doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(170,170,170);
+          doc.text(qShort, rx, ry);
+          ry += qShort.length * 4.2 + 4;
 
           // Divider
-          doc.setDrawColor(230,220,215);doc.setLineWidth(0.25);
-          doc.line(margin,y-2,pageW-margin,y-2);
+          doc.setDrawColor(225,215,210); doc.setLineWidth(0.25);
+          doc.line(margin, ry, pageW-margin, ry);
+
+          y = ry + 5;
           qNum++;
         });
         y+=6;
