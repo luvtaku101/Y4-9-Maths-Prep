@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maths Revision Paper Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --cream: #fdf8f0;
+  --sage: #7a9e7e;
+  --sage-light: #b5d0b8;
+  --sage-dark: #4a7a52;
+  --peach: #f0a882;
+  --peach-light: #fce8de;
+  --navy: #2c3e6b;
+  --purple: #7b5ea7;
+  --purple-light: #ede8f5;
+  --teal: #2a8d8d;
+  --teal-light: #d8f0f0;
+  --text: #2a2a2a;
+  --border: #d8e8d9;
+  --shadow: rgba(74,122,82,0.12);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+/* HEADER */
+.app-header {
+  background: linear-gradient(135deg, var(--sage-dark) 0%, var(--sage) 60%, var(--sage-light) 100%);
+  padding: 24px 32px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 4px 18px var(--shadow);
+}
+.app-header h1 { font-family: 'Lora', serif; color: #fff; font-size: 1.45rem; font-weight: 600; line-height: 1.3; }
+.app-header .subtitle { color: rgba(255,255,255,0.82); font-size: 0.8rem; margin-top: 3px; }
+.star-badge { background: var(--peach); color: #fff; border-radius: 50%; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 3px 10px rgba(0,0,0,0.18); flex-shrink: 0; }
+
+/* YEAR SELECTOR */
+.year-selector {
+  display: flex; gap: 0; padding: 0;
+  background: #fff; border-bottom: 2px solid var(--border);
+  overflow-x: auto;
+}
+.year-btn {
+  flex: 1; min-width: 80px; padding: 14px 10px;
+  border: none; border-right: 1px solid var(--border);
+  background: #fff; font-family: 'Nunito', sans-serif;
+  font-weight: 800; font-size: 0.95rem; cursor: pointer;
+  transition: all 0.18s; color: #999;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.year-btn:last-child { border-right: none; }
+.year-btn .yr-label { font-size: 1.1rem; }
+.year-btn .yr-sub { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.year-btn.active-y4 { background: #eef1fa; color: var(--navy); border-bottom: 3px solid var(--navy); }
+.year-btn.active-y5 { background: #eef6ee; color: var(--sage-dark); border-bottom: 3px solid var(--sage-dark); }
+.year-btn.active-y8 { background: var(--purple-light); color: var(--purple); border-bottom: 3px solid var(--purple); }
+.year-btn.active-y9 { background: var(--teal-light); color: var(--teal); border-bottom: 3px solid var(--teal); }
+
+/* CONTROLS */
+.controls {
+  display: flex; gap: 12px; padding: 16px 24px;
+  background: #fff; border-bottom: 2px solid var(--border);
+  flex-wrap: wrap; align-items: center;
+}
+.controls label { font-weight: 700; font-size: 0.88rem; color: var(--sage-dark); }
+.week-input { border: 2px solid var(--border); border-radius: 8px; padding: 7px 12px; font-family: 'Nunito', sans-serif; font-size: 0.88rem; background: var(--cream); }
+.btn { padding: 10px 20px; border: none; border-radius: 10px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.88rem; cursor: pointer; transition: all 0.18s; display: flex; align-items: center; gap: 7px; }
+.btn-generate { background: linear-gradient(135deg, var(--sage-dark), var(--sage)); color: #fff; box-shadow: 0 3px 12px var(--shadow); }
+.btn-generate:hover { transform: translateY(-2px); }
+.btn-answers { background: var(--peach-light); color: var(--peach); border: 2px solid var(--peach); }
+.btn-answers:hover { background: var(--peach); color: #fff; }
+.btn-pdf { background: linear-gradient(135deg, var(--navy), #3d5a9e); color: #fff; }
+.btn-pdf:hover { transform: translateY(-2px); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+/* LOADING */
+.loading-bar { height: 4px; background: var(--border); overflow: hidden; }
+.loading-bar-inner { height: 100%; width: 0%; background: linear-gradient(90deg, var(--sage), var(--peach)); transition: width 0.3s; }
+.loading-bar-inner.animating { animation: loadPulse 1.5s ease-in-out infinite; }
+@keyframes loadPulse { 0% { width:15%; } 50% { width:75%; } 100% { width:15%; } }
+.status-msg { text-align: center; padding: 12px; font-size: 0.88rem; color: var(--sage-dark); font-weight: 600; min-height: 40px; }
+
+/* PAPER */
+.paper-container { max-width: 880px; margin: 0 auto; padding: 24px 20px 60px; }
+.paper { background: #fff; border-radius: 16px; box-shadow: 0 4px 28px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 28px; }
+
+.paper-header { color: #fff; padding: 22px 28px; display: flex; justify-content: space-between; align-items: flex-start; }
+.paper-header h2 { font-family: 'Lora', serif; font-size: 1.15rem; font-weight: 600; }
+.paper-header .paper-meta { font-size: 0.78rem; opacity: 0.8; margin-top: 4px; }
+.paper-badge { background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.35); border-radius: 8px; padding: 6px 14px; font-size: 0.82rem; font-weight: 700; }
+
+.name-row { display: flex; gap: 28px; padding: 14px 28px; border-bottom: 2px solid var(--border); background: var(--cream); font-size: 0.9rem; flex-wrap: wrap; }
+.name-field { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--sage-dark); }
+.name-line { border-bottom: 2px solid var(--navy); min-width: 150px; height: 22px; }
+
+.section-header { padding: 10px 28px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); }
+.questions-list { padding: 6px 0; }
+.question-row { display: grid; grid-template-columns: 40px 1fr auto; align-items: flex-start; gap: 12px; padding: 14px 28px; border-bottom: 1px dashed var(--border); }
+.question-row:last-child { border-bottom: none; }
+.q-num { border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.84rem; flex-shrink: 0; margin-top: 2px; color: #fff; }
+.q-body { flex: 1; }
+.q-text { font-size: 0.98rem; font-weight: 600; line-height: 1.55; margin-bottom: 6px; }
+.q-context { font-size: 0.86rem; color: #777; margin-bottom: 6px; font-style: italic; }
+.working-space { border: 1.5px dashed var(--sage-light); border-radius: 8px; background: #f9fdf9; height: 72px; margin-top: 8px; position: relative; }
+.working-space::after { content: 'working out space'; position: absolute; top: 8px; left: 10px; font-size: 0.7rem; color: var(--sage-light); font-style: italic; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.working-space.tall { height: 100px; }
+.answer-box { border: 2px solid var(--border); border-radius: 8px; padding: 8px 12px; text-align: right; min-width: 120px; font-size: 0.8rem; color: #bbb; font-weight: 700; }
+.answer-box span { display: block; border-top: 2px solid var(--navy); margin-top: 26px; padding-top: 4px; font-size: 0.73rem; color: var(--navy); opacity: 0.6; text-align: center; }
+.marks-row { display: flex; justify-content: flex-end; padding: 14px 28px; border-top: 2px solid var(--border); background: var(--cream); font-weight: 800; font-size: 0.85rem; color: var(--sage-dark); gap: 20px; flex-wrap: wrap; }
+
+/* ANSWER KEY */
+.answer-key { background: #fff; border-radius: 16px; box-shadow: 0 4px 28px rgba(0,0,0,0.08); overflow: hidden; }
+.answer-key-header { background: linear-gradient(135deg, var(--peach), #e8856a); color: #fff; padding: 16px 28px; font-family: 'Lora', serif; font-size: 1.05rem; font-weight: 600; }
+.answers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 1px; background: var(--border); padding: 1px; }
+.answer-item { background: #fff; padding: 11px 16px; display: flex; gap: 10px; align-items: flex-start; }
+.ans-num { background: var(--peach); color: #fff; border-radius: 6px; padding: 2px 7px; font-weight: 800; font-size: 0.8rem; flex-shrink: 0; }
+.ans-text { font-weight: 700; font-size: 0.88rem; line-height: 1.4; }
+.ans-note { font-size: 0.75rem; color: #999; margin-top: 2px; }
+
+.hidden { display: none; }
+.empty-state { text-align: center; padding: 80px 20px; color: #ccc; }
+.empty-state .icon { font-size: 3.5rem; margin-bottom: 14px; }
+.empty-state p { font-size: 0.95rem; font-weight: 600; }
+
+@media(max-width:600px){
+  .app-header{padding:16px 14px 12px;}
+  .controls{padding:12px 14px;}
+  .question-row{grid-template-columns:34px 1fr;padding:12px 14px;}
+  .answer-box{display:none;}
+  .name-row{padding:12px 14px;}
+  .paper-header,.section-header,.marks-row{padding-left:14px;padding-right:14px;}
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>Maths Revision Paper Generator 📐</h1>
+    <div class="subtitle">SATs-style · Year 4 · Year 5 · Year 8 · Year 9 — 25 questions per paper</div>
+  </div>
+  <div class="star-badge">✨</div>
+</header>
+
+<!-- YEAR SELECTOR -->
+<div class="year-selector">
+  <button class="year-btn active-y4" id="yb-y4" onclick="selectYear('y4')">
+    <span class="yr-label">Year 4</span>
+    <span class="yr-sub">KS2 SATs</span>
+  </button>
+  <button class="year-btn" id="yb-y5" onclick="selectYear('y5')">
+    <span class="yr-label">Year 5</span>
+    <span class="yr-sub">KS2 SATs</span>
+  </button>
+  <button class="year-btn" id="yb-y8" onclick="selectYear('y8')">
+    <span class="yr-label">Year 8</span>
+    <span class="yr-sub">KS3 Revision</span>
+  </button>
+  <button class="year-btn" id="yb-y9" onclick="selectYear('y9')">
+    <span class="yr-label">Year 9</span>
+    <span class="yr-sub">KS3 / GCSE</span>
+  </button>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <label>Week date:</label>
+  <input type="date" class="week-input" id="weekDate">
+  <button class="btn btn-generate" id="btnGenerate" onclick="generatePaper()">✨ Generate Paper</button>
+  <button class="btn btn-answers hidden" id="btnAnswers" onclick="toggleAnswers()">🔑 Show Answers</button>
+  <button class="btn btn-pdf hidden" id="btnPdf" onclick="savePdf()">☁️ Save PDF to Drive</button>
+</div>
+
+<div class="loading-bar"><div class="loading-bar-inner" id="loadBar"></div></div>
+<div class="status-msg" id="statusMsg">Select a year group, then click Generate 📝</div>
+
+<div class="paper-container" id="paperContainer">
+  <div class="empty-state">
+    <div class="icon">📐</div>
+    <p>Your paper will appear here</p>
+  </div>
+</div>
+
+<script>
+// ─── Config per year group ───────────────────────────────────────────────────
+const YEAR_CONFIG = {
+  y4: {
+    label: 'Year 4',
+    badge: 'YEAR 4',
+    headerGrad: 'linear-gradient(135deg,#2c3e6b 0%,#3d5a9e 100%)',
+    totalQ: 25,
+    sections: [
+      { key:'sectionA', title:'Paper 1: Arithmetic', count:8 },
+      { key:'sectionB', title:'Paper 2: Reasoning',  count:9 },
+      { key:'sectionC', title:'Paper 3: Reasoning',  count:8 }
+    ],
+    marksRow: ['Paper 1: ___ / 8','Paper 2: ___ / 9','Paper 3: ___ / 8','Total: ___ / 25'],
+    sectionColors: {
+      sectionA:{ fill:'#eef1fa', text:'#2c3e6b', num:'#2c3e6b' },
+      sectionB:{ fill:'#eef6ee', text:'#4a7a52', num:'#4a7a52' },
+      sectionC:{ fill:'#fce8de', text:'#c0683a', num:'#c0683a' }
+    },
+    systemPrompt: `You generate Year 4 UK Maths SATs practice questions for 8–9 year olds. Return ONLY valid JSON, no markdown.
+
+Generate exactly 25 questions:
+- sectionA "Paper 1: Arithmetic" — 8 Qs: column addition/subtraction to 10000, times tables (up to 12×12), dividing 2-digit by 1-digit, simple same-denominator fractions, multiply/divide by 10 and 100
+- sectionB "Paper 2: Reasoning" — 9 Qs: word problems with money/time/mass/length, temperature, rounding to nearest 10/100, Roman numerals to 100, equivalent fractions, ordering fractions, sequences
+- sectionC "Paper 3: Reasoning" — 8 Qs: perimeter and area of rectangles, lines of symmetry described, coordinates, bar chart or pictogram reading described in text, 2-step word problems, units of measure conversion
+
+Each question:
+{ "q":"question text", "context":"short story setup or empty", "answer":"exact answer", "unit":"unit or empty", "answerNote":"marking note or empty" }
+
+Return: {"sectionA":[...8...],"sectionB":[...9...],"sectionC":[...8...]}`
+  },
+  y5: {
+    label: 'Year 5',
+    badge: 'YEAR 5',
+    headerGrad: 'linear-gradient(135deg,#2e6b35 0%,#4a9e52 100%)',
+    totalQ: 25,
+    sections: [
+      { key:'sectionA', title:'Paper 1: Arithmetic', count:8 },
+      { key:'sectionB', title:'Paper 2: Reasoning',  count:9 },
+      { key:'sectionC', title:'Paper 3: Reasoning',  count:8 }
+    ],
+    marksRow: ['Paper 1: ___ / 8','Paper 2: ___ / 9','Paper 3: ___ / 8','Total: ___ / 25'],
+    sectionColors: {
+      sectionA:{ fill:'#eef6ee', text:'#2e6b35', num:'#2e6b35' },
+      sectionB:{ fill:'#e8f4e8', text:'#3d8a44', num:'#3d8a44' },
+      sectionC:{ fill:'#fdf8f0', text:'#7a6030', num:'#7a6030' }
+    },
+    systemPrompt: `You generate Year 5 UK Maths SATs-style practice questions for 9–10 year olds. Return ONLY valid JSON, no markdown.
+
+Generate exactly 25 questions:
+- sectionA "Paper 1: Arithmetic" — 8 Qs: addition/subtraction of numbers up to 1,000,000; multiply 4-digit by 1 or 2-digit; divide 4-digit by 1-digit; fractions (add/subtract with different denominators using simple LCM); multiply/divide decimals by 10/100/1000; percentage of amounts (10%, 25%, 50%)
+- sectionB "Paper 2: Reasoning" — 9 Qs: multi-step word problems, negative numbers in context, rounding decimals, ordering fractions and decimals, prime numbers, square/cube numbers, factor pairs, Roman numerals to 1000, reading timetables
+- sectionC "Paper 3: Reasoning" — 8 Qs: area and perimeter of compound shapes, converting units (km↔m, kg↔g, l↔ml), angles in shapes, coordinates in all four quadrants, reflection/translation, interpreting line graphs and tables, problem solving with fractions/percentages
+
+Each question:
+{ "q":"question text", "context":"story setup or empty", "answer":"exact answer", "unit":"unit or empty", "answerNote":"marking note or empty" }
+
+Return: {"sectionA":[...8...],"sectionB":[...9...],"sectionC":[...8...]}`
+  },
+  y8: {
+    label: 'Year 8',
+    badge: 'YEAR 8',
+    headerGrad: 'linear-gradient(135deg,#4a2c7a 0%,#7b5ea7 100%)',
+    totalQ: 25,
+    sections: [
+      { key:'sectionA', title:'Section A: Number & Algebra', count:10 },
+      { key:'sectionB', title:'Section B: Geometry & Measures', count:8 },
+      { key:'sectionC', title:'Section C: Statistics & Problem Solving', count:7 }
+    ],
+    marksRow: ['Section A: ___ / 10','Section B: ___ / 8','Section C: ___ / 7','Total: ___ / 25'],
+    sectionColors: {
+      sectionA:{ fill:'#ede8f5', text:'#4a2c7a', num:'#7b5ea7' },
+      sectionB:{ fill:'#f0eaf8', text:'#5c3a8a', num:'#5c3a8a' },
+      sectionC:{ fill:'#fce8de', text:'#a0503a', num:'#a0503a' }
+    },
+    systemPrompt: `You generate Year 8 KS3 Maths revision questions for 12–13 year olds. Return ONLY valid JSON, no markdown.
+
+Generate exactly 25 questions:
+- sectionA "Number & Algebra" — 10 Qs: expanding and factorising single brackets, solving 2-step linear equations, forming expressions from word problems, index notation and prime factor decomposition, HCF and LCM, fractions/decimals/percentages interconversion, percentage increase/decrease, ratio and proportion, substitution into formulae, standard form basics
+- sectionB "Geometry & Measures" — 8 Qs: area and circumference of circles, Pythagoras' theorem (find hypotenuse or short side), angles in parallel lines (alternate/corresponding/co-interior), interior angles of polygons, volume of prisms, bearings, enlargement with scale factor, transformations (describe fully)
+- sectionC "Statistics & Problem Solving" — 7 Qs: mean/median/mode/range from a list or frequency table, probability (single and combined events), interpreting scatter graphs (described in text), using a formula in context, real-world ratio/proportion problem, multi-step algebra/geometry problem, reverse percentage
+
+Each question MUST include full working space (set "needsTallSpace":true for geometry/algebra). 
+{ "q":"question text", "context":"scenario or empty", "answer":"exact answer with working if needed", "unit":"unit or empty", "answerNote":"method mark note or empty", "needsTallSpace": true/false }
+
+Return: {"sectionA":[...10...],"sectionB":[...8...],"sectionC":[...7...]}`
+  },
+  y9: {
+    label: 'Year 9',
+    badge: 'YEAR 9',
+    headerGrad: 'linear-gradient(135deg,#1a6b6b 0%,#2a8d8d 100%)',
+    totalQ: 25,
+    sections: [
+      { key:'sectionA', title:'Section A: Number, Algebra & Ratio', count:10 },
+      { key:'sectionB', title:'Section B: Geometry, Trigonometry & Vectors', count:8 },
+      { key:'sectionC', title:'Section C: Statistics, Probability & Problem Solving', count:7 }
+    ],
+    marksRow: ['Section A: ___ / 10','Section B: ___ / 8','Section C: ___ / 7','Total: ___ / 25'],
+    sectionColors: {
+      sectionA:{ fill:'#d8f0f0', text:'#1a6b6b', num:'#2a8d8d' },
+      sectionB:{ fill:'#e0f4f4', text:'#1a5c5c', num:'#1a5c5c' },
+      sectionC:{ fill:'#fce8de', text:'#a0503a', num:'#a0503a' }
+    },
+    systemPrompt: `You generate Year 9 Maths revision questions (KS3/early GCSE) for 13–14 year olds. Return ONLY valid JSON, no markdown.
+
+Generate exactly 25 questions:
+- sectionA "Number, Algebra & Ratio" — 10 Qs: expanding double brackets (FOIL), factorising quadratics (simple), solving linear inequalities, simultaneous equations (substitution method), direct and inverse proportion, compound interest and depreciation, standard form calculations, surds (simplify), laws of indices including negative/fractional, algebraic fractions (simplify)
+- sectionB "Geometry, Trigonometry & Vectors" — 8 Qs: trigonometry (sin/cos/tan — find angle or side), Pythagoras in 3D context, circle theorems (identify and apply), arc length and sector area, congruence and similarity, vector arithmetic (add/subtract/scalar multiply), equation of a straight line (gradient-intercept), transformation combinations
+- sectionC "Statistics, Probability & Problem Solving" — 7 Qs: cumulative frequency and box plots (described), histograms (frequency density), conditional probability (tree diagrams), Venn diagrams, iterative methods / trial and improvement, algebraic proof, multi-step GCSE-style problem combining two topics
+
+Each question should feel like a real GCSE foundation/higher borderline question. Set "needsTallSpace":true for any question needing significant working.
+{ "q":"question text", "context":"scenario or empty", "answer":"exact answer (simplest form)", "unit":"unit or empty", "answerNote":"method marks note or empty", "needsTallSpace": true/false }
+
+Return: {"sectionA":[...10...],"sectionB":[...8...],"sectionC":[...7...]}`
+  }
+};
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let selectedYear = 'y4';
+let currentPaper = null;
+let showingAnswers = false;
+
+// Default date → next Thursday
+(function() {
+  const d = new Date();
+  const dt = (4 - d.getDay() + 7) % 7 || 7;
+  d.setDate(d.getDate() + dt);
+  document.getElementById('weekDate').value = d.toISOString().split('T')[0];
+})();
+
+function selectYear(yr) {
+  selectedYear = yr;
+  document.querySelectorAll('.year-btn').forEach(b => {
+    b.className = 'year-btn';
+    if (b.id === 'yb-' + yr) b.classList.add('active-' + yr);
+  });
+  currentPaper = null;
+  showingAnswers = false;
+  document.getElementById('paperContainer').innerHTML = '<div class="empty-state"><div class="icon">📐</div><p>Click Generate to create a ' + YEAR_CONFIG[yr].label + ' paper</p></div>';
+  document.getElementById('btnAnswers').classList.add('hidden');
+  document.getElementById('btnPdf').classList.add('hidden');
+  document.getElementById('statusMsg').textContent = YEAR_CONFIG[yr].label + ' selected — click Generate 📝';
+}
+
+// ─── Generate ─────────────────────────────────────────────────────────────────
+async function generatePaper() {
+  const cfg = YEAR_CONFIG[selectedYear];
+  const btn = document.getElementById('btnGenerate');
+  const bar = document.getElementById('loadBar');
+  const msg = document.getElementById('statusMsg');
+
+  btn.disabled = true;
+  bar.classList.add('animating');
+  msg.textContent = '🧠 Generating ' + cfg.label + ' questions with AI…';
+
+  const weekDate = document.getElementById('weekDate').value;
+  const weekLabel = weekDate ? new Date(weekDate).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : '';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system: cfg.systemPrompt,
+        messages:[{ role:'user', content:'Generate a new practice paper. Use varied numbers and real-world contexts. Make it engaging.' }]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content[0].text.replace(/```json|```/g,'').trim();
+    const paper = JSON.parse(raw);
+
+    currentPaper = { ...paper, weekLabel, weekDate, year: selectedYear };
+    showingAnswers = false;
+    renderPaper(currentPaper);
+
+    bar.classList.remove('animating'); bar.style.width='100%';
+    setTimeout(()=>{ bar.style.width='0%'; },600);
+    msg.textContent = '✅ ' + cfg.label + ' paper ready! Save as PDF for iPad.';
+    document.getElementById('btnAnswers').classList.remove('hidden');
+    document.getElementById('btnPdf').classList.remove('hidden');
+    document.getElementById('btnAnswers').textContent = '🔑 Show Answer Key';
+
+  } catch(err) {
+    bar.classList.remove('animating'); bar.style.width='0%';
+    msg.textContent = '❌ Error — check connection and try again.';
+    console.error(err);
+  }
+  btn.disabled = false;
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function renderPaper(paper) {
+  const cfg = YEAR_CONFIG[paper.year];
+  const container = document.getElementById('paperContainer');
+  let qNum = 1;
+
+  let html = `<div class="paper">
+    <div class="paper-header" style="background:${cfg.headerGrad}">
+      <div>
+        <h2>${cfg.label} Maths ${paper.year==='y8'||paper.year==='y9'?'Revision':'SATs Practice'} Paper</h2>
+        <div class="paper-meta">${paper.weekLabel?'Week of '+paper.weekLabel+' &nbsp;·&nbsp; ':''} ${cfg.totalQ} Questions &nbsp;·&nbsp; ${cfg.totalQ} Marks</div>
+      </div>
+      <div class="paper-badge">${cfg.badge}</div>
+    </div>
+    <div class="name-row">
+      <div class="name-field">Name: <div class="name-line"></div></div>
+      <div class="name-field">Date: <div class="name-line" style="min-width:120px"></div></div>
+      <div class="name-field">Score: <div class="name-line" style="min-width:60px"></div> / ${cfg.totalQ}</div>
+    </div>`;
+
+  cfg.sections.forEach(sec => {
+    const qs = paper[sec.key] || [];
+    const col = cfg.sectionColors[sec.key];
+    html += `<div class="section-header" style="background:${col.fill};color:${col.text}">${sec.title}</div>`;
+    html += `<div class="questions-list">`;
+    qs.forEach(q => {
+      const tall = q.needsTallSpace || paper.year==='y8' || paper.year==='y9';
+      html += `<div class="question-row">
+        <div class="q-num" style="background:${col.num}">${qNum}</div>
+        <div class="q-body">
+          ${q.context?`<div class="q-context">${q.context}</div>`:''}
+          <div class="q-text">${q.q}</div>
+          <div class="working-space${tall?' tall':''}"></div>
+        </div>
+        <div class="answer-box">
+          <div style="height:26px"></div>
+          <span>Answer${q.unit?' ('+q.unit+')':''}</span>
+        </div>
+      </div>`;
+      qNum++;
+    });
+    html += `</div>`;
+  });
+
+  html += `<div class="marks-row">${cfg.marksRow.map(m=>`<span>${m}</span>`).join('')}</div></div>`;
+
+  // Answer key
+  qNum = 1;
+  html += `<div class="answer-key ${showingAnswers?'':'hidden'}" id="answerKeyDiv">
+    <div class="answer-key-header">🔑 Answer Key — Teacher / Parent Copy</div>
+    <div class="answers-grid">`;
+  cfg.sections.forEach(sec => {
+    (paper[sec.key]||[]).forEach(q => {
+      html += `<div class="answer-item">
+        <div class="ans-num">Q${qNum}</div>
+        <div>
+          <div class="ans-text">${q.answer}${q.unit?' '+q.unit:''}</div>
+          ${q.answerNote?`<div class="ans-note">${q.answerNote}</div>`:''}
+        </div>
+      </div>`;
+      qNum++;
+    });
+  });
+  html += `</div></div>`;
+
+  container.innerHTML = html;
+}
+
+function toggleAnswers() {
+  showingAnswers = !showingAnswers;
+  const div = document.getElementById('answerKeyDiv');
+  const btn = document.getElementById('btnAnswers');
+  if(div){ div.classList.toggle('hidden',!showingAnswers); btn.textContent = showingAnswers?'🙈 Hide Answer Key':'🔑 Show Answer Key'; }
+}
+
+// ─── PDF ──────────────────────────────────────────────────────────────────────
+async function savePdf() {
+  if(!currentPaper) return;
+  const cfg = YEAR_CONFIG[currentPaper.year];
+  const btn = document.getElementById('btnPdf');
+  const msg = document.getElementById('statusMsg');
+  btn.disabled = true;
+  msg.textContent = '📄 Building PDF…';
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pageW=210, pageH=297, margin=16, cw=pageW-margin*2;
+    let y=margin;
+
+    const checkPage=(n=20)=>{ if(y+n>pageH-14){doc.addPage();y=margin;} };
+
+    // Header
+    doc.setFillColor(...hexToRgb(cfg.headerGrad.match(/#[0-9a-f]{6}/gi)[0]));
+    doc.rect(0,0,pageW,32,'F');
+    doc.setFontSize(15);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+    doc.text(`${cfg.label} Maths ${currentPaper.year==='y8'||currentPaper.year==='y9'?'Revision':'SATs Practice'} Paper`, margin, 13);
+    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(210,225,230);
+    const wkStr = currentPaper.weekLabel?'Week of '+currentPaper.weekLabel+'   ·   ':'';
+    doc.text(wkStr+cfg.totalQ+' Questions · '+cfg.totalQ+' Marks', margin, 22);
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+    doc.text(cfg.badge, pageW-margin-18, 18);
+
+    y=42;
+    // Name row
+    doc.setFillColor(253,248,240);doc.rect(0,y-6,pageW,13,'F');
+    doc.setDrawColor(210,225,210);doc.setLineWidth(0.3);doc.rect(0,y-6,pageW,13);
+    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(42,42,42);
+    doc.text('Name: _________________________', margin, y+1);
+    doc.text('Date: ___________________', margin+80, y+1);
+    doc.text('Score: _______ / '+cfg.totalQ, margin+150, y+1);
+    y+=16;
+
+    const secPdfColors = {
+      sectionA: hexToRgb(cfg.sectionColors.sectionA.num),
+      sectionB: hexToRgb(cfg.sectionColors.sectionB.num),
+      sectionC: hexToRgb(cfg.sectionColors.sectionC.num)
+    };
+
+    let qNum=1;
+    cfg.sections.forEach(sec=>{
+      const qs=currentPaper[sec.key]||[];
+      const sc=secPdfColors[sec.key];
+
+      checkPage(14);
+      doc.setFillColor(sc[0],sc[1],sc[2],0.12);
+      doc.setFillColor(...sc.map(v=>Math.min(255,v+160)));
+      doc.rect(0,y-5,pageW,10,'F');
+      doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...sc);
+      doc.text(sec.title.toUpperCase(), margin, y+1);
+      y+=13;
+
+      qs.forEach(q=>{
+        const ctxH = q.context? doc.splitTextToSize(q.context,cw-18).length*4.2+2:0;
+        const qLines = doc.splitTextToSize(q.q,cw-18);
+        const wsH = (q.needsTallSpace||currentPaper.year==='y8'||currentPaper.year==='y9') ? 28 : 20;
+        const estH = ctxH + qLines.length*5.5 + wsH + 10;
+        checkPage(estH);
+
+        // Number circle
+        doc.setFillColor(...sc);
+        doc.circle(margin+3.5, y+1.5, 3.5,'F');
+        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+        doc.text(String(qNum), margin+3.5, y+2.5,{align:'center'});
+
+        const qx=margin+11, qw=cw-38;
+
+        if(q.context){
+          doc.setFontSize(8.5);doc.setFont('helvetica','italic');doc.setTextColor(130,130,130);
+          const cl=doc.splitTextToSize(q.context,qw);
+          doc.text(cl,qx,y);y+=cl.length*4.2+1;
+        }
+
+        doc.setFontSize(10.5);doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);
+        const ql=doc.splitTextToSize(q.q,qw);
+        doc.text(ql,qx,y);
+
+        // Answer box right
+        const ansLabel='Answer'+(q.unit?' ('+q.unit+')':'')+':';
+        doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
+        doc.text(ansLabel,pageW-margin-32,y);
+        doc.setDrawColor(...sc);doc.setLineWidth(0.5);
+        doc.line(pageW-margin-32,y+2,pageW-margin,y+2);
+
+        y+=ql.length*5.2+3;
+
+        // Working space
+        doc.setDrawColor(181,208,184);doc.setLineWidth(0.35);
+        doc.setFillColor(249,253,249);
+        doc.roundedRect(qx,y,qw+30,wsH,2,2,'FD');
+        doc.setFontSize(6.5);doc.setFont('helvetica','italic');doc.setTextColor(190,215,190);
+        doc.text('working out space',qx+3,y+5);
+        y+=wsH+7;
+
+        doc.setDrawColor(220,235,220);doc.setLineWidth(0.25);
+        doc.line(margin,y-3,pageW-margin,y-3);
+        qNum++;
+      });
+    });
+
+    // Marks row
+    checkPage(13);
+    doc.setFillColor(253,248,240);doc.rect(0,y,pageW,11,'F');
+    doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(44,62,107);
+    const mw=cw/cfg.marksRow.length;
+    cfg.marksRow.forEach((m,i)=>doc.text(m,margin+i*mw,y+7));
+    y+=18;
+
+    // Answer key page
+    doc.addPage();y=margin;
+    doc.setFillColor(240,168,130);doc.rect(0,0,pageW,26,'F');
+    doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+    doc.text('Answer Key — Teacher / Parent Copy', margin, 17);
+    y=34; qNum=1;
+
+    cfg.sections.forEach(sec=>{
+      const qs=currentPaper[sec.key]||[];
+      const sc=secPdfColors[sec.key];
+      checkPage(12);
+      doc.setFillColor(...sc.map(v=>Math.min(255,v+155)));
+      doc.rect(0,y-5,pageW,9,'F');
+      doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(...sc);
+      doc.text(sec.title.toUpperCase(),margin,y);y+=12;
+
+      let ci=0; const cols=3; const colW2=cw/cols;
+      qs.forEach(q=>{
+        if(ci===cols){ci=0;y+=14;checkPage(16);}
+        const cx=margin+ci*colW2;
+        doc.setFillColor(240,168,130);doc.roundedRect(cx,y-5,15,8,2,2,'F');
+        doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+        doc.text('Q'+qNum,cx+7.5,y-0.5,{align:'center'});
+        doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);
+        const ans=(q.answer+(q.unit?' '+q.unit:'')).substring(0,35);
+        doc.text(ans,cx+18,y-0.5);
+        if(q.answerNote){
+          doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(150,150,150);
+          doc.text(q.answerNote.substring(0,40),cx+18,y+4);
+        }
+        ci++;qNum++;
+      });
+      y+=18;
+    });
+
+    const fileName=`${cfg.label.replace(' ','')}_Maths_${(currentPaper.weekDate||'Practice').replace(/-/g,'')}.pdf`;
+    doc.save(fileName);
+    window.open('https://drive.google.com/drive/my-drive','_blank');
+    msg.textContent='✅ PDF downloaded! Google Drive opened — drag the file in to upload.';
+  } catch(err){
+    console.error(err);
+    msg.textContent='❌ PDF error. Try again.';
+  }
+  btn.disabled=false;
+}
+
+function hexToRgb(hex){
+  const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r?[parseInt(r[1],16),parseInt(r[2],16),parseInt(r[3],16)]:[0,0,0];
+}
+</script>
+</body>
+</html>
