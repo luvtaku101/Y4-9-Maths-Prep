@@ -104,9 +104,9 @@ body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(-
 .q-body { flex: 1; }
 .q-text { font-size: 0.98rem; font-weight: 600; line-height: 1.55; margin-bottom: 6px; }
 .q-context { font-size: 0.86rem; color: #777; margin-bottom: 6px; font-style: italic; }
-.working-space { border: 1.5px dashed var(--sage-light); border-radius: 8px; background: #f9fdf9; height: 72px; margin-top: 8px; position: relative; }
+.working-space { border: 1.5px dashed var(--sage-light); border-radius: 8px; background: #f9fdf9; height: 144px; margin-top: 8px; position: relative; }
 .working-space::after { content: 'working out space'; position: absolute; top: 8px; left: 10px; font-size: 0.7rem; color: var(--sage-light); font-style: italic; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-.working-space.tall { height: 100px; }
+.working-space.tall { height: 200px; }
 .answer-box { border: 2px solid var(--border); border-radius: 8px; padding: 8px 12px; text-align: right; min-width: 120px; font-size: 0.8rem; color: #bbb; font-weight: 700; }
 .answer-box span { display: block; border-top: 2px solid var(--navy); margin-top: 26px; padding-top: 4px; font-size: 0.73rem; color: var(--navy); opacity: 0.6; text-align: center; }
 .marks-row { display: flex; justify-content: flex-end; padding: 14px 28px; border-top: 2px solid var(--border); background: var(--cream); font-weight: 800; font-size: 0.85rem; color: var(--sage-dark); gap: 20px; flex-wrap: wrap; }
@@ -170,8 +170,8 @@ body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(-
   <label>Week date:</label>
   <input type="date" class="week-input" id="weekDate">
   <button class="btn btn-generate" id="btnGenerate" onclick="generatePaper()">✨ Generate Paper</button>
-  <button class="btn btn-answers hidden" id="btnAnswers" onclick="toggleAnswers()">🔑 Show Answers</button>
-  <button class="btn btn-pdf hidden" id="btnPdf" onclick="savePdf()">☁️ Save PDF to Drive</button>
+  <button class="btn btn-pdf hidden" id="btnPdf" onclick="savePdf(false)">☁️ Save Question Paper (PDF)</button>
+  <button class="btn btn-answers hidden" id="btnAnswers" onclick="savePdf(true)">🔑 Download Answer Key (PDF)</button>
 </div>
 
 <div class="loading-bar"><div class="loading-bar-inner" id="loadBar"></div></div>
@@ -259,17 +259,12 @@ Return: {"sectionA":[...8...],"sectionB":[...9...],"sectionC":[...8...]}`
       sectionB:{ fill:'#f0eaf8', text:'#5c3a8a', num:'#5c3a8a' },
       sectionC:{ fill:'#fce8de', text:'#a0503a', num:'#a0503a' }
     },
-    systemPrompt: `You generate Year 8 KS3 Maths revision questions for 12–13 year olds. Return ONLY valid JSON, no markdown.
-
-Generate exactly 25 questions:
-- sectionA "Number & Algebra" — 10 Qs: expanding and factorising single brackets, solving 2-step linear equations, forming expressions from word problems, index notation and prime factor decomposition, HCF and LCM, fractions/decimals/percentages interconversion, percentage increase/decrease, ratio and proportion, substitution into formulae, standard form basics
-- sectionB "Geometry & Measures" — 8 Qs: area and circumference of circles, Pythagoras' theorem (find hypotenuse or short side), angles in parallel lines (alternate/corresponding/co-interior), interior angles of polygons, volume of prisms, bearings, enlargement with scale factor, transformations (describe fully)
-- sectionC "Statistics & Problem Solving" — 7 Qs: mean/median/mode/range from a list or frequency table, probability (single and combined events), interpreting scatter graphs (described in text), using a formula in context, real-world ratio/proportion problem, multi-step algebra/geometry problem, reverse percentage
-
-Each question MUST include full working space (set "needsTallSpace":true for geometry/algebra). 
-{ "q":"question text", "context":"scenario or empty", "answer":"exact answer with working if needed", "unit":"unit or empty", "answerNote":"method mark note or empty", "needsTallSpace": true/false }
-
-Return: {"sectionA":[...10...],"sectionB":[...8...],"sectionC":[...7...]}`
+    systemPrompt: `Generate 25 Year 8 KS3 Maths questions. Return ONLY valid JSON, no markdown, no explanation.
+sectionA (10 Qs, Number & Algebra): expanding/factorising brackets, 2-step equations, index notation, HCF/LCM, percentage increase/decrease, ratio, substitution, standard form.
+sectionB (8 Qs, Geometry & Measures): circle area/circumference, Pythagoras, parallel line angles, polygon angles, prism volume, enlargement, transformations.
+sectionC (7 Qs, Statistics & Problem Solving): mean/median/mode/range, probability, reverse percentage, multi-step problems.
+Each item: {"q":"question","context":"","answer":"answer","unit":"","answerNote":"","needsTallSpace":true}
+Return: {"sectionA":[...10 items...],"sectionB":[...8 items...],"sectionC":[...7 items...]}`
   },
   y9: {
     label: 'Year 9',
@@ -287,17 +282,12 @@ Return: {"sectionA":[...10...],"sectionB":[...8...],"sectionC":[...7...]}`
       sectionB:{ fill:'#e0f4f4', text:'#1a5c5c', num:'#1a5c5c' },
       sectionC:{ fill:'#fce8de', text:'#a0503a', num:'#a0503a' }
     },
-    systemPrompt: `You generate Year 9 Maths revision questions (KS3/early GCSE) for 13–14 year olds. Return ONLY valid JSON, no markdown.
-
-Generate exactly 25 questions:
-- sectionA "Number, Algebra & Ratio" — 10 Qs: expanding double brackets (FOIL), factorising quadratics (simple), solving linear inequalities, simultaneous equations (substitution method), direct and inverse proportion, compound interest and depreciation, standard form calculations, surds (simplify), laws of indices including negative/fractional, algebraic fractions (simplify)
-- sectionB "Geometry, Trigonometry & Vectors" — 8 Qs: trigonometry (sin/cos/tan — find angle or side), Pythagoras in 3D context, circle theorems (identify and apply), arc length and sector area, congruence and similarity, vector arithmetic (add/subtract/scalar multiply), equation of a straight line (gradient-intercept), transformation combinations
-- sectionC "Statistics, Probability & Problem Solving" — 7 Qs: cumulative frequency and box plots (described), histograms (frequency density), conditional probability (tree diagrams), Venn diagrams, iterative methods / trial and improvement, algebraic proof, multi-step GCSE-style problem combining two topics
-
-Each question should feel like a real GCSE foundation/higher borderline question. Set "needsTallSpace":true for any question needing significant working.
-{ "q":"question text", "context":"scenario or empty", "answer":"exact answer (simplest form)", "unit":"unit or empty", "answerNote":"method marks note or empty", "needsTallSpace": true/false }
-
-Return: {"sectionA":[...10...],"sectionB":[...8...],"sectionC":[...7...]}`
+    systemPrompt: `Generate 25 Year 9 Maths questions (KS3/early GCSE). Return ONLY valid JSON, no markdown, no explanation.
+sectionA (10 Qs, Number/Algebra/Ratio): double brackets, factorising quadratics, inequalities, simultaneous equations, compound interest, standard form, surds, index laws.
+sectionB (8 Qs, Geometry/Trig/Vectors): sin/cos/tan, Pythagoras 3D, circle theorems, arc/sector, vectors, straight line equation, transformations.
+sectionC (7 Qs, Stats/Probability): conditional probability, tree diagrams, Venn diagrams, frequency density, algebraic proof, multi-step problems.
+Each item: {"q":"question","context":"","answer":"answer","unit":"","answerNote":"","needsTallSpace":true}
+Return: {"sectionA":[...10 items...],"sectionB":[...8 items...],"sectionC":[...7 items...]}`
   }
 };
 
@@ -321,7 +311,6 @@ function selectYear(yr) {
     if (b.id === 'yb-' + yr) b.classList.add('active-' + yr);
   });
   currentPaper = null;
-  showingAnswers = false;
   document.getElementById('paperContainer').innerHTML = '<div class="empty-state"><div class="icon">📐</div><p>Click Generate to create a ' + YEAR_CONFIG[yr].label + ' paper</p></div>';
   document.getElementById('btnAnswers').classList.add('hidden');
   document.getElementById('btnPdf').classList.add('hidden');
@@ -370,7 +359,7 @@ async function generatePaper() {
     msg.textContent = '✅ ' + cfg.label + ' paper ready! Save as PDF for iPad.';
     document.getElementById('btnAnswers').classList.remove('hidden');
     document.getElementById('btnPdf').classList.remove('hidden');
-    document.getElementById('btnAnswers').textContent = '🔑 Show Answer Key';
+    document.getElementById('btnAnswers').textContent = '🔑 Download Answer Key (PDF)';
 
   } catch(err) {
     bar.classList.remove('animating'); bar.style.width='0%';
@@ -426,72 +415,27 @@ function renderPaper(paper) {
 
   html += `<div class="marks-row">${cfg.marksRow.map(m=>`<span>${m}</span>`).join('')}</div></div>`;
 
-  // Answer key
-  qNum = 1;
-  html += `<div class="answer-key ${showingAnswers?'':'hidden'}" id="answerKeyDiv">
-    <div class="answer-key-header">🔑 Answer Key — Teacher / Parent Copy</div>
-    <div class="answers-grid">`;
-  cfg.sections.forEach(sec => {
-    (paper[sec.key]||[]).forEach(q => {
-      html += `<div class="answer-item">
-        <div class="ans-num">Q${qNum}</div>
-        <div>
-          <div class="ans-text">${q.answer}${q.unit?' '+q.unit:''}</div>
-          ${q.answerNote?`<div class="ans-note">${q.answerNote}</div>`:''}
-        </div>
-      </div>`;
-      qNum++;
-    });
-  });
-  html += `</div></div>`;
-
   container.innerHTML = html;
 }
 
-function toggleAnswers() {
-  showingAnswers = !showingAnswers;
-  const div = document.getElementById('answerKeyDiv');
-  const btn = document.getElementById('btnAnswers');
-  if(div){ div.classList.toggle('hidden',!showingAnswers); btn.textContent = showingAnswers?'🙈 Hide Answer Key':'🔑 Show Answer Key'; }
-}
+// Answer key is now a separate PDF download
 
 // ─── PDF ──────────────────────────────────────────────────────────────────────
-async function savePdf() {
+async function savePdf(answerKeyOnly=false) {
   if(!currentPaper) return;
   const cfg = YEAR_CONFIG[currentPaper.year];
-  const btn = document.getElementById('btnPdf');
+  const btnQ = document.getElementById('btnPdf');
+  const btnA = document.getElementById('btnAnswers');
   const msg = document.getElementById('statusMsg');
-  btn.disabled = true;
-  msg.textContent = '📄 Building PDF…';
+  btnQ.disabled = true; btnA.disabled = true;
+  msg.textContent = answerKeyOnly ? '🔑 Building Answer Key PDF…' : '📄 Building Question Paper PDF…';
 
   try {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
     const pageW=210, pageH=297, margin=16, cw=pageW-margin*2;
     let y=margin;
-
     const checkPage=(n=20)=>{ if(y+n>pageH-14){doc.addPage();y=margin;} };
-
-    // Header
-    doc.setFillColor(...hexToRgb(cfg.headerGrad.match(/#[0-9a-f]{6}/gi)[0]));
-    doc.rect(0,0,pageW,32,'F');
-    doc.setFontSize(15);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-    doc.text(`${cfg.label} Maths ${currentPaper.year==='y8'||currentPaper.year==='y9'?'Revision':'SATs Practice'} Paper`, margin, 13);
-    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(210,225,230);
-    const wkStr = currentPaper.weekLabel?'Week of '+currentPaper.weekLabel+'   ·   ':'';
-    doc.text(wkStr+cfg.totalQ+' Questions · '+cfg.totalQ+' Marks', margin, 22);
-    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-    doc.text(cfg.badge, pageW-margin-18, 18);
-
-    y=42;
-    // Name row
-    doc.setFillColor(253,248,240);doc.rect(0,y-6,pageW,13,'F');
-    doc.setDrawColor(210,225,210);doc.setLineWidth(0.3);doc.rect(0,y-6,pageW,13);
-    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(42,42,42);
-    doc.text('Name: _________________________', margin, y+1);
-    doc.text('Date: ___________________', margin+80, y+1);
-    doc.text('Score: _______ / '+cfg.totalQ, margin+150, y+1);
-    y+=16;
 
     const secPdfColors = {
       sectionA: hexToRgb(cfg.sectionColors.sectionA.num),
@@ -499,119 +443,164 @@ async function savePdf() {
       sectionC: hexToRgb(cfg.sectionColors.sectionC.num)
     };
 
-    let qNum=1;
-    cfg.sections.forEach(sec=>{
-      const qs=currentPaper[sec.key]||[];
-      const sc=secPdfColors[sec.key];
+    // ── ANSWER KEY PDF ───────────────────────────────────────────
+    if(answerKeyOnly) {
+      doc.setFillColor(240,168,130);doc.rect(0,0,pageW,36,'F');
+      doc.setFontSize(16);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+      doc.text('Answer Key — Teacher / Parent Copy', margin, 15);
+      doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(255,235,220);
+      const wkStr2 = currentPaper.weekLabel?'Week of '+currentPaper.weekLabel+'   ·   ':'';
+      doc.text(wkStr2+cfg.label+' · '+cfg.totalQ+' Questions', margin, 26);
+      y=46; let qNum=1;
 
-      checkPage(14);
-      doc.setFillColor(sc[0],sc[1],sc[2],0.12);
-      doc.setFillColor(...sc.map(v=>Math.min(255,v+160)));
-      doc.rect(0,y-5,pageW,10,'F');
-      doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...sc);
-      doc.text(sec.title.toUpperCase(), margin, y+1);
-      y+=13;
+      cfg.sections.forEach(sec=>{
+        const qs=currentPaper[sec.key]||[];
+        const sc=secPdfColors[sec.key];
+        checkPage(16);
+        doc.setFillColor(...sc.map(v=>Math.min(255,v+155)));
+        doc.rect(0,y-6,pageW,11,'F');
+        doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...sc);
+        doc.text(sec.title.toUpperCase(),margin,y);y+=14;
 
-      qs.forEach(q=>{
-        const ctxH = q.context? doc.splitTextToSize(q.context,cw-18).length*4.2+2:0;
-        const qLines = doc.splitTextToSize(q.q,cw-18);
-        const wsH = (q.needsTallSpace||currentPaper.year==='y8'||currentPaper.year==='y9') ? 28 : 20;
-        const estH = ctxH + qLines.length*5.5 + wsH + 10;
-        checkPage(estH);
+        qs.forEach(q=>{
+          checkPage(22);
+          // Q number badge
+          doc.setFillColor(240,120,80);
+          doc.roundedRect(margin,y-5,18,9,2,2,'F');
+          doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+          doc.text('Q'+qNum,margin+9,y-0.2,{align:'center'});
 
-        // Number circle
-        doc.setFillColor(...sc);
-        doc.circle(margin+3.5, y+1.5, 3.5,'F');
-        doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-        doc.text(String(qNum), margin+3.5, y+2.5,{align:'center'});
+          // Answer
+          doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);
+          const ansText = q.answer+(q.unit?' '+q.unit:'');
+          const ansLines = doc.splitTextToSize(ansText, cw-28);
+          doc.text(ansLines,margin+22,y-0.2);
 
-        const qx=margin+11, qw=cw-38;
+          // Note
+          if(q.answerNote){
+            doc.setFontSize(8);doc.setFont('helvetica','italic');doc.setTextColor(140,140,140);
+            const noteLines = doc.splitTextToSize(q.answerNote, cw-28);
+            doc.text(noteLines, margin+22, y+5);
+            y+=noteLines.length*4;
+          }
 
-        if(q.context){
-          doc.setFontSize(8.5);doc.setFont('helvetica','italic');doc.setTextColor(130,130,130);
-          const cl=doc.splitTextToSize(q.context,qw);
-          doc.text(cl,qx,y);y+=cl.length*4.2+1;
-        }
+          // Question text (smaller, grey)
+          doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(160,160,160);
+          const qShort = doc.splitTextToSize(q.q.substring(0,120), cw-28);
+          doc.text(qShort, margin+22, y+5);
+          y += Math.max(ansLines.length*5, 6) + qShort.length*3.8 + 6;
 
-        doc.setFontSize(10.5);doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);
-        const ql=doc.splitTextToSize(q.q,qw);
-        doc.text(ql,qx,y);
-
-        // Answer box right
-        const ansLabel='Answer'+(q.unit?' ('+q.unit+')':'')+':';
-        doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
-        doc.text(ansLabel,pageW-margin-32,y);
-        doc.setDrawColor(...sc);doc.setLineWidth(0.5);
-        doc.line(pageW-margin-32,y+2,pageW-margin,y+2);
-
-        y+=ql.length*5.2+3;
-
-        // Working space
-        doc.setDrawColor(181,208,184);doc.setLineWidth(0.35);
-        doc.setFillColor(249,253,249);
-        doc.roundedRect(qx,y,qw+30,wsH,2,2,'FD');
-        doc.setFontSize(6.5);doc.setFont('helvetica','italic');doc.setTextColor(190,215,190);
-        doc.text('working out space',qx+3,y+5);
-        y+=wsH+7;
-
-        doc.setDrawColor(220,235,220);doc.setLineWidth(0.25);
-        doc.line(margin,y-3,pageW-margin,y-3);
-        qNum++;
+          // Divider
+          doc.setDrawColor(230,220,215);doc.setLineWidth(0.25);
+          doc.line(margin,y-2,pageW-margin,y-2);
+          qNum++;
+        });
+        y+=6;
       });
-    });
 
-    // Marks row
-    checkPage(13);
-    doc.setFillColor(253,248,240);doc.rect(0,y,pageW,11,'F');
-    doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(44,62,107);
-    const mw=cw/cfg.marksRow.length;
-    cfg.marksRow.forEach((m,i)=>doc.text(m,margin+i*mw,y+7));
-    y+=18;
+      const fileNameA=`${cfg.label.replace(' ','')}_AnswerKey_${(currentPaper.weekDate||'Practice').replace(/-/g,'')}.pdf`;
+      doc.save(fileNameA);
+      window.open('https://drive.google.com/drive/my-drive','_blank');
+      msg.textContent='✅ Answer Key PDF downloaded! Drag into Google Drive to save.';
 
-    // Answer key page
-    doc.addPage();y=margin;
-    doc.setFillColor(240,168,130);doc.rect(0,0,pageW,26,'F');
-    doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-    doc.text('Answer Key — Teacher / Parent Copy', margin, 17);
-    y=34; qNum=1;
+    // ── QUESTION PAPER PDF ───────────────────────────────────────
+    } else {
+      // Header
+      doc.setFillColor(...hexToRgb(cfg.headerGrad.match(/#[0-9a-f]{6}/gi)[0]));
+      doc.rect(0,0,pageW,32,'F');
+      doc.setFontSize(15);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+      doc.text(cfg.label+' Maths '+(currentPaper.year==='y8'||currentPaper.year==='y9'?'Revision':'SATs Practice')+' Paper', margin, 13);
+      doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(210,225,230);
+      const wkStr = currentPaper.weekLabel?'Week of '+currentPaper.weekLabel+'   ·   ':'';
+      doc.text(wkStr+cfg.totalQ+' Questions · '+cfg.totalQ+' Marks', margin, 22);
+      doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+      doc.text(cfg.badge, pageW-margin-18, 18);
+      y=42;
 
-    cfg.sections.forEach(sec=>{
-      const qs=currentPaper[sec.key]||[];
-      const sc=secPdfColors[sec.key];
-      checkPage(12);
-      doc.setFillColor(...sc.map(v=>Math.min(255,v+155)));
-      doc.rect(0,y-5,pageW,9,'F');
-      doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(...sc);
-      doc.text(sec.title.toUpperCase(),margin,y);y+=12;
+      // Name row
+      doc.setFillColor(253,248,240);doc.rect(0,y-6,pageW,13,'F');
+      doc.setDrawColor(210,225,210);doc.setLineWidth(0.3);doc.rect(0,y-6,pageW,13);
+      doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(42,42,42);
+      doc.text('Name: _________________________', margin, y+1);
+      doc.text('Date: ___________________', margin+80, y+1);
+      doc.text('Score: _______ / '+cfg.totalQ, margin+150, y+1);
+      y+=16;
 
-      let ci=0; const cols=3; const colW2=cw/cols;
-      qs.forEach(q=>{
-        if(ci===cols){ci=0;y+=14;checkPage(16);}
-        const cx=margin+ci*colW2;
-        doc.setFillColor(240,168,130);doc.roundedRect(cx,y-5,15,8,2,2,'F');
-        doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-        doc.text('Q'+qNum,cx+7.5,y-0.5,{align:'center'});
-        doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);
-        const ans=(q.answer+(q.unit?' '+q.unit:'')).substring(0,35);
-        doc.text(ans,cx+18,y-0.5);
-        if(q.answerNote){
-          doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(150,150,150);
-          doc.text(q.answerNote.substring(0,40),cx+18,y+4);
-        }
-        ci++;qNum++;
+      let qNum=1;
+      cfg.sections.forEach(sec=>{
+        const qs=currentPaper[sec.key]||[];
+        const sc=secPdfColors[sec.key];
+        checkPage(14);
+        doc.setFillColor(...sc.map(v=>Math.min(255,v+160)));
+        doc.rect(0,y-5,pageW,10,'F');
+        doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...sc);
+        doc.text(sec.title.toUpperCase(), margin, y+1);
+        y+=13;
+
+        qs.forEach(q=>{
+          const ctxH = q.context? doc.splitTextToSize(q.context,cw-18).length*4.2+2:0;
+          const qLines = doc.splitTextToSize(q.q,cw-18);
+          const wsH = (q.needsTallSpace||currentPaper.year==='y8'||currentPaper.year==='y9') ? 55 : 40;
+          const estH = ctxH + qLines.length*5.5 + wsH + 12;
+          checkPage(estH);
+
+          doc.setFillColor(...sc);
+          doc.circle(margin+3.5, y+1.5, 3.5,'F');
+          doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+          doc.text(String(qNum), margin+3.5, y+2.5,{align:'center'});
+
+          const qx=margin+11, qw=cw-38;
+
+          if(q.context){
+            doc.setFontSize(8.5);doc.setFont('helvetica','italic');doc.setTextColor(130,130,130);
+            const cl=doc.splitTextToSize(q.context,qw);
+            doc.text(cl,qx,y);y+=cl.length*4.2+1;
+          }
+
+          doc.setFontSize(10.5);doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);
+          const ql=doc.splitTextToSize(q.q,qw);
+          doc.text(ql,qx,y);
+
+          const ansLabel='Answer'+(q.unit?' ('+q.unit+')':'')+':';
+          doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(120,120,120);
+          doc.text(ansLabel,pageW-margin-32,y);
+          doc.setDrawColor(...sc);doc.setLineWidth(0.5);
+          doc.line(pageW-margin-32,y+2,pageW-margin,y+2);
+
+          y+=ql.length*5.2+3;
+
+          // Working space — doubled
+          doc.setDrawColor(181,208,184);doc.setLineWidth(0.35);
+          doc.setFillColor(249,253,249);
+          doc.roundedRect(qx,y,qw+28,wsH,2,2,'FD');
+          doc.setFontSize(6.5);doc.setFont('helvetica','italic');doc.setTextColor(190,215,190);
+          doc.text('working out space',qx+3,y+5);
+          y+=wsH+8;
+
+          doc.setDrawColor(220,235,220);doc.setLineWidth(0.25);
+          doc.line(margin,y-3,pageW-margin,y-3);
+          qNum++;
+        });
       });
-      y+=18;
-    });
 
-    const fileName=`${cfg.label.replace(' ','')}_Maths_${(currentPaper.weekDate||'Practice').replace(/-/g,'')}.pdf`;
-    doc.save(fileName);
-    window.open('https://drive.google.com/drive/my-drive','_blank');
-    msg.textContent='✅ PDF downloaded! Google Drive opened — drag the file in to upload.';
+      // Marks row
+      checkPage(13);
+      doc.setFillColor(253,248,240);doc.rect(0,y,pageW,11,'F');
+      doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(44,62,107);
+      const mw=cw/cfg.marksRow.length;
+      cfg.marksRow.forEach((m,i)=>doc.text(m,margin+i*mw,y+7));
+
+      const fileNameQ=`${cfg.label.replace(' ','')}_Maths_${(currentPaper.weekDate||'Practice').replace(/-/g,'')}.pdf`;
+      doc.save(fileNameQ);
+      window.open('https://drive.google.com/drive/my-drive','_blank');
+      msg.textContent='✅ Question Paper PDF downloaded! Drag into Google Drive to save.';
+    }
+
   } catch(err){
     console.error(err);
     msg.textContent='❌ PDF error. Try again.';
   }
-  btn.disabled=false;
+  btnQ.disabled=false; btnA.disabled=false;
 }
 
 function hexToRgb(hex){
